@@ -1,10 +1,12 @@
+# $Id: Object.pm,v 1.4 2000/03/28 16:18:31 matt Exp $
+
 package Time::Object;
 
 use strict;
 use vars qw($VERSION @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS);
 
 require Exporter;
-use POSIX 'strftime';
+use POSIX ();
 use Time::Seconds;
 use Carp;
 
@@ -19,7 +21,7 @@ use Carp;
 	overrideGlobally
 );
 
-$VERSION = '0.05';
+$VERSION = '0.07';
 
 use constant 'c_sec' => 0;
 use constant 'c_min' => 1;
@@ -43,6 +45,19 @@ sub gmtime {
 	my $time = shift;
 	$time = time if (!defined $time);
 	_mktime($time, 0);
+}
+
+sub new {
+	my $time = shift;
+	if (defined $time) {
+		if (ref($time) && $time->isa('Time::Object')) {
+			return _mktime($time->[c_epoch], $time->[c_islocal]);
+		}
+		else {
+			return &localtime($time);
+		}
+	}
+	return &localtime;
 }
 
 sub _mktime {
@@ -74,10 +89,14 @@ sub sec {
 	$time->[c_sec];
 }
 
+*second = \&sec;
+
 sub min {
 	my $time = shift;
 	$time->[c_min];
 }
+
+*minute = \&minute;
 
 sub hour {
 	my $time = shift;
@@ -88,6 +107,8 @@ sub mday {
 	my $time = shift;
 	$time->[c_mday];
 }
+
+*day_of_month = \&mday;
 
 sub mon {
 	my $time = shift;
@@ -101,8 +122,10 @@ sub _mon {
 
 sub monname {
 	my $time = shift;
-	POSIX::strftime('%B', (@$time)[c_sec..c_isdst]);
+	$time->strftime('%B');
 }
+
+*month = \&monname;
 
 sub year {
 	my $time = shift;
@@ -129,20 +152,28 @@ sub _wday {
 	$time->[c_wday];
 }
 
+*day_of_week = \&_wday;
+
 sub wdayname {
 	my $time = shift;
-	POSIX::strftime('%A', (@$time)[c_sec..c_isdst]);
+	$time->strftime('%A');
 }
+
+*day = \&wdayname;
 
 sub yday {
 	my $time = shift;
 	$time->[c_yday];
 }
 
+*day_of_year = \&yday;
+
 sub isdst {
 	my $time = shift;
 	$time->[c_isdst];
 }
+
+*daylight_savings = \&isdst;
 
 # Thanks to Tony Olekshy <olekshy@avrasoft.com> for this algorithm
 sub tzoffset {
@@ -203,6 +234,12 @@ sub mdy {
 sub dmy {
 	my $time = shift;
 	sprintf('%02d/%02d/%d', $time->[c_mday], $time->mon, $time->year);
+}
+
+sub strftime {
+	my $time = shift;
+	my $format = shift;
+	POSIX::strftime($format, (@$time)[c_sec..c_isdst]);
 }
 
 use overload '""' => \&date;
@@ -286,32 +323,38 @@ http://www.xray.mpe.mpg.de/mailing-lists/perl5-porters/2000-01/msg00241.html
 After importing this module, when you use localtime or gmtime in a scalar
 context, rather than getting an ordinary scalar string representing the
 date and time, you get a Time::Object object, whose stringification happens
-to produce the same effect as the localtime and gmtime functions. The
+to produce the same effect as the localtime and gmtime functions. There is 
+also a new() constructor provided, which is the same as localtime(), except
+when passed a Time::Object object, in which case it's a copy constructor. The
 following methods are available on the object:
 
-    $t->sec
-    $t->min
+    $t->sec               # also available as $t->second
+    $t->min               # also available as $t->minute
     $t->hour
-    $t->mday
-    $t->mon             # based at 1
-    $t->_mon            # based at 0
-    $t->monname         # February (uses POSIX::strftime)
-    $t->year            # based at 0 (year 0 AD is, of course 1 BC).
-    $t->_year           # year minus 1900
-    $t->yr              # 2 digit year
-    $t->wday            # based at 1 (Sunday)
-    $t->_wday           # based at 0 (Also Sunday!)
-    $t->wdayname        # Tuesday (uses POSIX::strftime)
-    $t->yday
-    $t->isdst
-    $t->hms             # 01:23:45
-    $t->ymd             # 2000/02/29
-    $t->mdy             # 02/29/2000
-    $t->dmy             # 29/02/2000
-    $t->date            # Tue Feb 29 01:23:45 2000
-    "$t"                # same as $t->date
-    $t->epoch           # seconds since the epoch
-    $t->tzoffset        # timezone offset in hours
+    $t->mday              # also available as $t->day_of_month
+    $t->mon               # based at 1
+    $t->_mon              # based at 0
+    $t->monname           # February (uses POSIX::strftime)
+    $t->month             # same as $t->monname
+    $t->year              # based at 0 (year 0 AD is, of course 1 BC).
+    $t->_year             # year minus 1900
+    $t->yr                # 2 digit year
+    $t->wday              # based at 1 = Sunday
+    $t->_wday             # based at 0 = Sunday
+    $t->day_of_week       # based at 0 = Sunday
+    $t->wdayname          # Tuesday (uses POSIX::strftime)
+    $t->day               # same as wdayname
+    $t->yday              # also available as $t->day_of_year
+    $t->isdst             # also available as $t->daylight_savings
+    $t->hms               # 01:23:45
+    $t->ymd               # 2000/02/29
+    $t->mdy               # 02/29/2000
+    $t->dmy               # 29/02/2000
+    $t->date              # Tue Feb 29 01:23:45 2000
+    "$t"                  # same as $t->date
+    $t->epoch             # seconds since the epoch
+    $t->tzoffset          # timezone offset in hours
+    $t->strftime(FORMAT)  # same as POSIX::strftime
 
 =head2 Date Calculations
 
