@@ -1,6 +1,7 @@
 MANIFEST
 Makefile.PL
 Object.pm
+Object.xs
 Seconds.pm
 t/base.t
 README

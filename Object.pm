@@ -1,4 +1,4 @@
-# $Id: Object.pm,v 1.6 2000/06/05 08:41:54 matt Exp $
+# $Id: Object.pm,v 1.7 2000/07/27 12:57:23 matt Exp $
 
 package Time::Object;
 
@@ -6,11 +6,11 @@ use strict;
 use vars qw($VERSION @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS);
 
 require Exporter;
-use POSIX ();
+require DynaLoader;
 use Time::Seconds;
 use Carp;
 
-@ISA = qw(Exporter);
+@ISA = qw(Exporter DynaLoader);
 
 @EXPORT = qw(
 	localtime
@@ -21,7 +21,9 @@ use Carp;
 	overrideGlobally
 );
 
-$VERSION = '0.09';
+$VERSION = '0.10';
+
+bootstrap Time::Object $VERSION;
 
 use constant 'c_sec' => 0;
 use constant 'c_min' => 1;
@@ -240,8 +242,8 @@ sub dmy {
 
 sub strftime {
 	my $time = shift;
-	my $format = shift;
-	POSIX::strftime($format, (@$time)[c_sec..c_isdst]);
+	my $format = shift || "%a, %d %b %Y %H:%M:%S %Z";
+	return strftime_xs($format, (@$time)[c_sec..c_isdst]);
 }
 
 use overload '""' => \&date;
@@ -336,7 +338,7 @@ following methods are available on the object:
     $t->mday              # also available as $t->day_of_month
     $t->mon               # based at 1
     $t->_mon              # based at 0
-    $t->monname           # February (uses POSIX::strftime)
+    $t->monname           # February
     $t->month             # same as $t->monname
     $t->year              # based at 0 (year 0 AD is, of course 1 BC).
     $t->_year             # year minus 1900
@@ -344,7 +346,7 @@ following methods are available on the object:
     $t->wday              # based at 1 = Sunday
     $t->_wday             # based at 0 = Sunday
     $t->day_of_week       # based at 0 = Sunday
-    $t->wdayname          # Tuesday (uses POSIX::strftime)
+    $t->wdayname          # Tuesday
     $t->day               # same as wdayname
     $t->yday              # also available as $t->day_of_year
     $t->isdst             # also available as $t->daylight_savings
@@ -356,7 +358,7 @@ following methods are available on the object:
     "$t"                  # same as $t->date
     $t->epoch             # seconds since the epoch
     $t->tzoffset          # timezone offset in a Time::Seconds object
-    $t->strftime(FORMAT)  # same as POSIX::strftime
+    $t->strftime(FORMAT)  # same as POSIX::strftime (without POSIX.pm)
 
 =head2 Date Calculations
 
