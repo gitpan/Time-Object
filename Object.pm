@@ -1,4 +1,4 @@
-# $Id: Object.pm,v 1.5 2000/05/31 09:06:02 matt Exp $
+# $Id: Object.pm,v 1.6 2000/06/05 08:41:54 matt Exp $
 
 package Time::Object;
 
@@ -21,7 +21,7 @@ use Carp;
 	overrideGlobally
 );
 
-$VERSION = '0.08';
+$VERSION = '0.09';
 
 use constant 'c_sec' => 0;
 use constant 'c_min' => 1;
@@ -182,40 +182,35 @@ sub isdst {
 
 *daylight_savings = \&isdst;
 
-# Thanks to Tony Olekshy <olekshy@avrasoft.com> for this algorithm
+# Thanks to Tony Olekshy <olekshy@cs.ualberta.ca> for this algorithm
 sub tzoffset {
-	my $time = shift;
+    my $time = shift;
 
-	my $epoch = $time->[c_epoch];
+    my $epoch = $time->[c_epoch];
 
-	my $j = sub { # Tweaked Julian day number algorithm.
-			my @T; $_[0] ? 
-				(@T = CORE::localtime $epoch)
-				:
-				(@T = CORE::gmtime $epoch);
+    my $j = sub { # Tweaked Julian day number algorithm.
 
-			my ($s,$n,$h,$d,$m,$y) = @T; $m += 1; $y += 1900;
+        my ($s,$n,$h,$d,$m,$y) = @_; $m += 1; $y += 1900;
 
-			# Standard Julian day number algorithm without constant.
-			#
-			my $y1 = $m > 2 ? $y : $y - 1;
+        # Standard Julian day number algorithm without constant.
+        #
+        my $y1 = $m > 2 ? $y : $y - 1;
 
-			my $m1 = $m > 2 ? $m + 1 : $m + 13;
+        my $m1 = $m > 2 ? $m + 1 : $m + 13;
 
-			my $days = int(365.25 * $y1) + int(30.6001 * $m1) + $d;
+        my $day = int(365.25 * $y1) + int(30.6001 * $m1) + $d;
 
-			# Modify to include hours/mins/secs in floating portion.
-			#
-			return $days + ($h + ($n + $s / 60) / 60) / 24;
-		};
+        # Modify to include hours/mins/secs in floating portion.
+        #
+        return $day + ($h + ($n + $s / 60) / 60) / 24;
+    };
 
-	# Compute floating offset in hours.
-	#
-	my $delta = 24 * (&$j(1) - &$j(0));
+    # Compute floating offset in hours.
+    #
+    my $delta = 24 * (&$j(CORE::localtime $epoch) - &$j(CORE::gmtime $epoch));
 
-	# Return value in hours rounded to nearest minute.
-	#
-	return Time::Seconds->new(int($delta * 60 + 0.5 * ($delta >= 0 ? 1 : -1)) / 60);
+    # Return value in seconds rounded to nearest minute.
+	return Time::Seconds->new( int($delta * 60 + ($delta >= 0 ? 0.5 : -0.5)) * 60);
 }
 
 sub epoch {
@@ -360,7 +355,7 @@ following methods are available on the object:
     $t->date              # Tue Feb 29 01:23:45 2000
     "$t"                  # same as $t->date
     $t->epoch             # seconds since the epoch
-    $t->tzoffset          # timezone offset in hours
+    $t->tzoffset          # timezone offset in a Time::Seconds object
     $t->strftime(FORMAT)  # same as POSIX::strftime
 
 =head2 Date Calculations

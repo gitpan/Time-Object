@@ -55,7 +55,7 @@ USAGE
         $t->date              # Tue Feb 29 01:23:45 2000
         "$t"                  # same as $t->date
         $t->epoch             # seconds since the epoch
-        $t->tzoffset          # timezone offset in hours
+        $t->tzoffset          # timezone offset in a Time::Seconds object
         $t->strftime(FORMAT)  # same as POSIX::strftime
 
   Date Calculations
