@@ -1,4 +1,4 @@
-# $Id: Object.pm,v 1.4 2000/03/28 16:18:31 matt Exp $
+# $Id: Object.pm,v 1.5 2000/05/31 09:06:02 matt Exp $
 
 package Time::Object;
 
@@ -21,7 +21,7 @@ use Carp;
 	overrideGlobally
 );
 
-$VERSION = '0.07';
+$VERSION = '0.08';
 
 use constant 'c_sec' => 0;
 use constant 'c_min' => 1;
@@ -48,16 +48,23 @@ sub gmtime {
 }
 
 sub new {
+	my $proto = shift;
+	my $class = ref($proto) || $proto;
 	my $time = shift;
-	if (defined $time) {
-		if (ref($time) && $time->isa('Time::Object')) {
-			return _mktime($time->[c_epoch], $time->[c_islocal]);
-		}
-		else {
-			return &localtime($time);
-		}
+	
+	my $self;
+	
+	if (defined($time)) {
+		$self = &localtime($time);
 	}
-	return &localtime;
+	elsif (ref($proto) && $proto->isa('Time::Object')) {
+		$self = _mktime($proto->[c_epoch], $proto->[c_islocal]);
+	}
+	else {
+		$self = &localtime();
+	}
+	
+	return bless $self, $class;
 }
 
 sub _mktime {
