@@ -19,7 +19,7 @@ use Carp;
 	overrideGlobally
 );
 
-$VERSION = '0.04';
+$VERSION = '0.05';
 
 use constant 'c_sec' => 0;
 use constant 'c_min' => 1;
@@ -101,7 +101,7 @@ sub _mon {
 
 sub monname {
 	my $time = shift;
-	POSIX::strftime('%B', @$time);
+	POSIX::strftime('%B', (@$time)[c_sec..c_isdst]);
 }
 
 sub year {
@@ -131,7 +131,7 @@ sub _wday {
 
 sub wdayname {
 	my $time = shift;
-	POSIX::strftime('%A', @$time);
+	POSIX::strftime('%A', (@$time)[c_sec..c_isdst]);
 }
 
 sub yday {

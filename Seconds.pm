@@ -6,12 +6,14 @@ use vars qw/@EXPORT @ISA/;
 
 @ISA = 'Exporter';
 
-@EXPORT = qw(ONE_MINUTE ONE_HOUR ONE_DAY ONE_WEEK);
+@EXPORT = qw(ONE_MINUTE ONE_HOUR ONE_DAY ONE_WEEK LEAP_YEAR NON_LEAP_YEAR);
 
 use constant ONE_MINUTE => 60;
 use constant ONE_HOUR => 3_600;
 use constant ONE_DAY => 86_400;
 use constant ONE_WEEK => 604_800;
+use constant LEAP_YEAR => 31_622_400; # 366 * ONE_DAY
+use constant NON_LEAP_YEAR => 31_536_000; # 365 * ONE_DAY
 
 use overload 
         '0+' => \&seconds,
@@ -51,7 +53,7 @@ sub weeks {
 
 sub years {
         my $s = shift;
-        $s->days / 365.2425;
+        $s->days / 365.24225;
 }
 
 1;
@@ -87,6 +89,8 @@ Time::Seconds also exports the following constants:
     ONE_WEEK
     ONE_HOUR
     ONE_MINUTE
+    LEAP_YEAR
+    NON_LEAP_YEAR
 
 Since perl does not (yet?) support constant objects, these constants are in
 seconds only, so you cannot, for example, do this: C<print ONE_WEEK-E<gt>minutes;>
@@ -104,7 +108,8 @@ The following methods are available:
     $val->years;
 
 The methods make the assumption that there are 24 hours in a day, 7 days in
-a week, and 365.2425 days in a year.
+a week, and 365.24225 days in a year (from The Calendar FAQ at 
+http://www.tondering.dk/claus/calendar.html)
 
 =head1 AUTHOR
 
