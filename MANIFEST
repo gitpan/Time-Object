@@ -4,4 +4,5 @@ Object.pm
 Object.xs
 Seconds.pm
 t/base.t
+t/core.t
 README

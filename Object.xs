@@ -242,7 +242,7 @@ mini_mktime(struct tm *ptm)
 MODULE = Time::Object         PACKAGE = Time::Object
 
 char *
-strftime_xs(fmt, sec, min, hour, mday, mon, year, wday = -1, yday = -1, isdst = -1)
+_strftime(fmt, sec, min, hour, mday, mon, year, wday = -1, yday = -1, isdst = -1)
 	char *		fmt
 	int		sec
 	int		min
