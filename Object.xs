@@ -308,10 +308,10 @@ strftime_xs(fmt, sec, min, hour, mday, mon, year, wday = -1, yday = -1, isdst = 
 		    Renew(buf, bufsize, char);
 		}
 		if (buf) {
-		    ST(0) = sv_2mortal(newSVpvn(buf, buflen));
+		    ST(0) = sv_2mortal(newSVpv(buf, buflen));
 		    Safefree(buf);
 		}
                 else
-		    ST(0) = sv_2mortal(newSVpvn(tmpbuf, len));
+		    ST(0) = sv_2mortal(newSVpv(tmpbuf, len));
 	    }
 	}

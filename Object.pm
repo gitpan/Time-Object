@@ -1,4 +1,4 @@
-# $Id: Object.pm,v 1.7 2000/07/27 12:57:23 matt Exp $
+# $Id: Object.pm,v 1.9 2000/08/01 12:31:30 matt Exp $
 
 package Time::Object;
 
@@ -9,6 +9,7 @@ require Exporter;
 require DynaLoader;
 use Time::Seconds;
 use Carp;
+use UNIVERSAL;
 
 @ISA = qw(Exporter DynaLoader);
 
@@ -21,7 +22,7 @@ use Carp;
 	overrideGlobally
 );
 
-$VERSION = '0.10';
+$VERSION = '0.11';
 
 bootstrap Time::Object $VERSION;
 
@@ -265,6 +266,8 @@ use overload
 sub subtract {
 	my $time = shift;
 	my $rhs = shift;
+	die "Can't subtract a date from something!" if shift;
+	
 	if (ref($rhs) && $rhs->isa('Time::Object')) {
 		return Time::Seconds->new($time->[c_epoch] - $rhs->epoch);
 	}
@@ -275,9 +278,10 @@ sub subtract {
 }
 
 sub add {
+	warn "add\n";
 	my $time = shift;
 	my $rhs = shift;
-	croak "Invalid rhs of addition" if ref($rhs);
+	croak "Invalid rhs of addition: $rhs" if ref($rhs);
 	
 	return _mktime(($time->[c_epoch] + $rhs), $time->[c_islocal]);
 }
@@ -285,15 +289,21 @@ sub add {
 use overload
 		'<=>' => \&compare;
 
+sub get_epochs {
+	my ($time, $rhs, $reverse) = @_;
+	$time = $time->epoch;
+	if (UNIVERSAL::isa($rhs, 'Time::Object')) {
+		$rhs = $rhs->epoch;
+	}
+	if ($reverse) {
+		return $rhs, $time;
+	}
+	return $time, $rhs;
+}
+
 sub compare {
-	my $time = shift;
-	my $rhs = shift;
-	if (ref($rhs) && $rhs->isa('Time::Object')) {
-		return $time->[c_epoch] <=> $rhs->epoch;
-	}
-	else {
-		return $time->[c_epoch] <=> $rhs;
-	}
+	my ($lhs, $rhs) = get_epochs(@_);
+	return $lhs <=> $rhs;
 }
 
 1;
